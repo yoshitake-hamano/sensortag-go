@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
@@ -60,10 +62,12 @@ func main() {
 	}()
 
 	fmt.Printf("Discovering profile...\n")
-	_, err = cln.DiscoverProfile(true)
+	p, err := cln.DiscoverProfile(true)
 	if err != nil {
 		log.Fatalf("can't discover profile: %s", err)
 	}
+
+	deviceName(p, cln)
 
 	// Disconnect the connection. (On OS X, this might take a while.)
 	fmt.Printf("Disconnecting [ %s ]... (this might take up to few seconds on OS X)\n", cln.Address())
@@ -72,21 +76,36 @@ func main() {
 	<-done
 }
 
-func getCharacteristicsImpl(profile *ble.Profile, property ble.Property) (*ble.Characteristic, error) {
+func deviceName(profile *ble.Profile, client ble.Client) error {
+	return readCharacteristics(profile, client, []byte{0x1, 0x8, 0, 0}, []byte{0x2, 0xa, 0, 0})
+}
+
+func readCharacteristics(profile *ble.Profile, client ble.Client, service []byte, characteristics []byte) error {
+	c, err := getCharacteristics(profile, service, characteristics)
+	if err != nil {
+		return err
+	}
+
+	buf, err := client.ReadCharacteristic(c)
+	if err != nil {
+		return err
+	}
+	resp := string(buf)
+	log.Print("[read ] ", resp)
+	return nil
+}
+
+func getCharacteristics(profile *ble.Profile, service []byte, characteristics []byte) (*ble.Characteristic, error) {
 	for _, s := range profile.Services {
+		if reflect.DeepEqual(service, s.UUID) {
+			continue
+		}
 		for _, c := range s.Characteristics {
-			if (c.Property & property) != 0 {
-				return c, nil
+			if reflect.DeepEqual(characteristics, c.UUID) {
+				continue
 			}
+			return c, nil
 		}
 	}
-	return nil, fmt.Errorf("not found %v Characteristic", property)
-}
-
-func getNotifyCharacteristics(p *ble.Profile) (*ble.Characteristic, error) {
-	return getCharacteristicsImpl(p, ble.CharNotify)
-}
-
-func getWriteCharacteristics(p *ble.Profile) (*ble.Characteristic, error) {
-	return getCharacteristicsImpl(p, ble.CharWrite)
+	return nil, errors.New("not found Characteristic")
 }
