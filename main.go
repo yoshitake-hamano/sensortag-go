@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"reflect"
 	"strings"
 	"time"
 
@@ -68,6 +67,8 @@ func main() {
 	}
 
 	deviceName(p, cln)
+	firmwareRevision(p, cln)
+	irTemperature(p, cln)
 
 	// Disconnect the connection. (On OS X, this might take a while.)
 	fmt.Printf("Disconnecting [ %s ]... (this might take up to few seconds on OS X)\n", cln.Address())
@@ -78,41 +79,59 @@ func main() {
 
 func deviceName(profile *ble.Profile, client ble.Client) (string, error) {
 	resp, err := readCharacteristics(profile, client, "1800", "2a00")
+	s := string(resp)
+	log.Print("[read ] ", s)
+	return s, err
+}
+
+func firmwareRevision(profile *ble.Profile, client ble.Client) (string, error) {
+	resp, err := readCharacteristics(profile, client, "180a", "2a26")
+	s := string(resp)
+	log.Print("[read ] ", s)
+	return s, err
+}
+
+func irTemperature(profile *ble.Profile, client ble.Client) ([]byte, error) {
+	resp, err := readCharacteristics(profile,
+		client,
+		"f000aa0004514000b000000000000000",
+		"f000aa0104514000b000000000000000")
 	log.Print("[read ] ", resp)
+
 	return resp, err
 }
 
 func readCharacteristics(profile *ble.Profile,
 	client ble.Client,
 	service string,
-	characteristics string) (string, error) {
+	characteristics string) ([]byte, error) {
 	sUUID, err := ble.Parse(service)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	cUUID, err := ble.Parse(characteristics)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	c, err := getCharacteristics(profile, sUUID, cUUID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	buf, err := client.ReadCharacteristic(c)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(buf), nil
+	return buf, nil
 }
 
 func getCharacteristics(profile *ble.Profile, service []byte, characteristics []byte) (*ble.Characteristic, error) {
 	for _, s := range profile.Services {
-		if reflect.DeepEqual(service, s.UUID) {
+		if !s.UUID.Equal(service) {
 			continue
 		}
 		for _, c := range s.Characteristics {
-			if reflect.DeepEqual(characteristics, c.UUID) {
+			if !c.UUID.Equal(characteristics) {
 				continue
 			}
 			return c, nil
