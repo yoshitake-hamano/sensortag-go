@@ -76,23 +76,34 @@ func main() {
 	<-done
 }
 
-func deviceName(profile *ble.Profile, client ble.Client) error {
-	return readCharacteristics(profile, client, []byte{0x1, 0x8, 0, 0}, []byte{0x2, 0xa, 0, 0})
+func deviceName(profile *ble.Profile, client ble.Client) (string, error) {
+	resp, err := readCharacteristics(profile, client, "1800", "2a00")
+	log.Print("[read ] ", resp)
+	return resp, err
 }
 
-func readCharacteristics(profile *ble.Profile, client ble.Client, service []byte, characteristics []byte) error {
-	c, err := getCharacteristics(profile, service, characteristics)
+func readCharacteristics(profile *ble.Profile,
+	client ble.Client,
+	service string,
+	characteristics string) (string, error) {
+	sUUID, err := ble.Parse(service)
 	if err != nil {
-		return err
+		return "", err
+	}
+	cUUID, err := ble.Parse(characteristics)
+	if err != nil {
+		return "", err
+	}
+	c, err := getCharacteristics(profile, sUUID, cUUID)
+	if err != nil {
+		return "", err
 	}
 
 	buf, err := client.ReadCharacteristic(c)
 	if err != nil {
-		return err
+		return "", err
 	}
-	resp := string(buf)
-	log.Print("[read ] ", resp)
-	return nil
+	return string(buf), nil
 }
 
 func getCharacteristics(profile *ble.Profile, service []byte, characteristics []byte) (*ble.Characteristic, error) {
