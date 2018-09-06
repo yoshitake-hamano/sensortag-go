@@ -75,7 +75,6 @@ func main() {
 	s.FirmwareRevision()
 	s.EnableKeyState()
 	s.EnableIRTemperature()
-	s.IsEnableIRTemperature()
 	for {
 		s.IRTemperature()
 		time.Sleep(time.Second)
