@@ -44,12 +44,11 @@ func (s *SensorTag) IRTemperature() ([]byte, error) {
 
 func (s *SensorTag) EnableIRTemperature() error {
 	log.Print("enable IR Temperature")
-	value := []byte{1, 0}
-	err := writeDescriptor(s.profile,
+	value := []byte{1}
+	err := writeCharacteristics(s.profile,
 		s.client,
 		"f000aa0004514000b000000000000000",
-		"f000aa0104514000b000000000000000",
-		"2902",
+		"f000aa0204514000b000000000000000",
 		value)
 	log.Print("[write] ", value)
 	return err
