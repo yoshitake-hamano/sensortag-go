@@ -44,12 +44,12 @@ func (s *SensorTag) IRTemperature() ([]byte, error) {
 
 func (s *SensorTag) EnableIRTemperature() error {
 	log.Print("enable IR Temperature")
-	return s.writeIRTemperature([]byte{1, 0})
+	return s.writeIRTemperatureConfig([]byte{1, 0})
 }
 
 func (s *SensorTag) DisableIRTemperature() error {
 	log.Print("disable IR Temperature")
-	return s.writeIRTemperature([]byte{0, 0})
+	return s.writeIRTemperatureConfig([]byte{0, 0})
 }
 
 func (s *SensorTag) IsEnableIRTemperature() (bool, error) {
@@ -63,11 +63,58 @@ func (s *SensorTag) IsEnableIRTemperature() (bool, error) {
 	return true, err
 }
 
-func (s *SensorTag) writeIRTemperature(value []byte) error {
+func (s *SensorTag) writeIRTemperatureConfig(value []byte) error {
 	err := writeDescriptor(s.profile,
 		s.client,
 		"f000aa0004514000b000000000000000",
 		"f000aa0104514000b000000000000000",
+		"2902",
+		value)
+	log.Print("[write] ", value)
+
+	return err
+}
+
+func (s *SensorTag) KeyStateCharacteristic() (*ble.Characteristic, error) {
+	sUUID, err := ble.Parse("ffe0")
+	if err != nil {
+		log.Print("err: ", err)
+		return nil, err
+	}
+	cUUID, err := ble.Parse("ffe1")
+	if err != nil {
+		log.Print("err: ", err)
+		return nil, err
+	}
+	return getCharacteristics(s.profile, sUUID, cUUID)
+}
+
+func (s *SensorTag) EnableKeyState() error {
+	log.Print("enable KeyState")
+	return s.writeKeyStateConfig([]byte{1, 0})
+}
+
+func (s *SensorTag) DisableKeyState() error {
+	log.Print("disable KeyState")
+	return s.writeKeyStateConfig([]byte{0, 0})
+}
+
+func (s *SensorTag) IsEnableKeyState() (bool, error) {
+	value, err := readDescriptor(s.profile,
+		s.client,
+		"ffe0",
+		"ffe1",
+		"2902")
+	log.Print("is enable Key State?")
+	log.Print("[read ] ", value)
+	return true, err
+}
+
+func (s *SensorTag) writeKeyStateConfig(value []byte) error {
+	err := writeDescriptor(s.profile,
+		s.client,
+		"ffe0",
+		"ffe1",
 		"2902",
 		value)
 	log.Print("[write] ", value)

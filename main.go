@@ -66,17 +66,20 @@ func main() {
 	}
 
 	s := NewSensorTag(p, cln)
+	keyC, err := s.KeyStateCharacteristic()
+	cln.Subscribe(keyC, false, func(req []byte) {
+		log.Print("key ", req)
+	})
+
 	s.DeviceName()
 	s.FirmwareRevision()
+	s.EnableKeyState()
 	s.EnableIRTemperature()
 	s.IsEnableIRTemperature()
-	s.IRTemperature()
-	time.Sleep(time.Second)
-	s.IRTemperature()
-	time.Sleep(time.Second)
-	s.IRTemperature()
-	time.Sleep(time.Second)
-	s.IRTemperature()
+	for {
+		s.IRTemperature()
+		time.Sleep(time.Second)
+	}
 
 	// Disconnect the connection. (On OS X, this might take a while.)
 	fmt.Printf("Disconnecting [ %s ]... (this might take up to few seconds on OS X)\n", cln.Address())
