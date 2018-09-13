@@ -74,9 +74,9 @@ func main() {
 	s.DeviceName()
 	s.FirmwareRevision()
 	s.EnableKeyState()
-	s.EnableIRTemperature()
+	s.EnableMovementSensor()
 	for {
-		s.IRTemperature()
+		s.MovementSensor()
 		time.Sleep(time.Second)
 	}
 

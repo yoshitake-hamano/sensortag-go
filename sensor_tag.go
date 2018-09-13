@@ -32,23 +32,23 @@ func (s *SensorTag) FirmwareRevision() (string, error) {
 	return string(value), err
 }
 
-func (s *SensorTag) IRTemperature() ([]byte, error) {
+func (s *SensorTag) MovementSensor() ([]byte, error) {
 	resp, err := readCharacteristics(s.profile,
 		s.client,
-		"f000aa0004514000b000000000000000",
-		"f000aa0104514000b000000000000000")
-	log.Print("IR Temperature")
+		"f000aa8004514000b000000000000000",
+		"f000aa8104514000b000000000000000")
+	log.Print("MovementSensor")
 	log.Print("[read ] ", resp)
 	return resp, err
 }
 
-func (s *SensorTag) EnableIRTemperature() error {
-	log.Print("enable IR Temperature")
-	value := []byte{1}
+func (s *SensorTag) EnableMovementSensor() error {
+	log.Print("enable MovementSensor")
+	value := []byte{0xff, 0xff}
 	err := writeCharacteristics(s.profile,
 		s.client,
-		"f000aa0004514000b000000000000000",
-		"f000aa0204514000b000000000000000",
+		"f000aa8004514000b000000000000000",
+		"f000aa8204514000b000000000000000",
 		value)
 	log.Print("[write] ", value)
 	return err
